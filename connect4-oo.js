@@ -18,7 +18,10 @@ class Game{
         // make column tops (clickable area for adding a piece to that column)
         const top = document.createElement('tr');
         top.setAttribute('id', 'column-top');
-        top.addEventListener('click', this.handleClick);
+        
+        this.handleGameClick = this.handleClick.bind(this);
+
+        top.addEventListener('click', this.handleGameClick);
       
         for (let x = 0; x < this.WIDTH; x++) {
           const headCell = document.createElement('td');
@@ -66,7 +69,11 @@ class Game{
         const x = +evt.target.id;
        console.log("this is set to", this);
         // get next spot in column (if none, ignore click)
-        const y = this.findSpotForCol.call(x);
+        const y = this.findSpotForCol(x);
+        //=================!!!! this is not working !!!======
+        // when I click the top column to play, it gives me an error :Uncaught TypeError: this.findSpotForCol is not a function at HTMLTableRowElement.handleClick
+        //I found out here refers to HTML element of where it is clicked.
+
         if (y === null) {
           return;
         }
@@ -86,7 +93,9 @@ class Game{
         }
           
         // switch players
+        //=====why doesn't thinks work?=====//
         this.currPlayer = this.currPlayer === 1 ? 2 : 1;
+        console.log(this.currPlayer);
       }
       checkForWin() {
         function _win(cells) {
@@ -97,7 +106,8 @@ class Game{
           return cells.every(
             ([y, x]) =>
               y >= 0 &&
-              y < this.HEIGHT &&
+              y < this.HEIGHT && 
+              //WHY Error: Uncaught TypeError: Cannot read properties of undefined (reading 'HEIGHT')
               x >= 0 &&
               x < this.WIDTH &&
               this.board[y][x] === this.currPlayer
