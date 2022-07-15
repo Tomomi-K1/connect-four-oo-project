@@ -1,25 +1,37 @@
 class Game{
-    constructor(HEIGHT, WIDTH) {
+    constructor(p1, p2, HEIGHT=6, WIDTH=7) {
         this.HEIGHT = HEIGHT;
         this.WIDTH = WIDTH;
         this.board = [];
-        this.currPlayer = 1;
-        this.makeHtmlBoard = this.makeHtmlBoard();
-        this.makeBoard = this.makeBoard();
+        this.player = [p1, p2];
+        this.currPlayer = p1;
+        this.makeHtmlBoard();
+        this.makeBoard();
+        this.gameOver = false;
     }
     makeBoard() {
+      if(this.board.length !==0){
+        return;
+      }
         for (let y = 0; y < this.HEIGHT; y++) {
           this.board.push(Array.from({ length: this.WIDTH }));
         }
+
+        console.log(this.board);
+      
     }
     makeHtmlBoard() {
         const board = document.getElementById('board');
+        //clears existing board, otherwise you will have multiple board
+        board.innerHTML = '';
       
         // make column tops (clickable area for adding a piece to that column)
         const top = document.createElement('tr');
         top.setAttribute('id', 'column-top');
-        
+        //why dod you need this in front of handleGameClick
         this.handleGameClick = this.handleClick.bind(this);
+        //by putting 'this' in front of newly created name handleGameClick, it works as it it was created inside the constructor. this.handleGameClick will be accessible from any other methods within this class.
+        //you have to bind(this) to handleClick here so that when you use this as callback func of evend listner, it won't run against window. If you don't bind it will run on window
 
         top.addEventListener('click', this.handleGameClick);
       
@@ -43,31 +55,33 @@ class Game{
       
           board.append(row);
         }
-      }
-      findSpotForCol(x) {
+    }
+    findSpotForCol(x) {
         for (let y = this.HEIGHT - 1; y >= 0; y--) {
           if (!this.board[y][x]) {
             return y;
           }
         }
         return null;
-      }
-      placeInTable(y, x) {
+    }
+    placeInTable(y, x) {
         const piece = document.createElement('div');
         piece.classList.add('piece');
-        piece.classList.add(`p${this.currPlayer}`);
+        piece.style.backgroundColor = this.currPlayer.color;
         // piece.style.top = -50 * (y + 2);
       
         const spot = document.getElementById(`${y}-${x}`);
         spot.append(piece);
-      }
+    }
       endGame(msg) {
         alert(msg);
-      }
-      handleClick(evt) {
+        const top = document.querySelector("#column-top");
+        top.removeEventListener("click", this.handleGameClick);
+    }
+    handleClick(evt) {
         // get x from ID of clicked cell
         const x = +evt.target.id;
-       console.log("this is set to", this);
+      //  console.log("this is set to", this);
         // get next spot in column (if none, ignore click)
         const y = this.findSpotForCol(x);
         //=================!!!! this is not working !!!======
@@ -84,7 +98,8 @@ class Game{
         
         // check for win
         if (this.checkForWin()) {
-          return this.endGame(`Player ${this.currPlayer} won!`);
+          this.gameOver = true;
+          return this.endGame(`Player ${this.currPlayer.color} player won!`);
         }
         
         // check for tie
@@ -94,16 +109,29 @@ class Game{
           
         // switch players
         //=====why doesn't thinks work?=====//
-        this.currPlayer = this.currPlayer === 1 ? 2 : 1;
-        console.log(this.currPlayer);
-      }
-      checkForWin() {
-        function _win(cells) {
-          // Check four cells to see if they're all color of current player
+        this.currPlayer = this.currPlayer === this.player[0] ? this.player[1] : this.player[0];
+        // console.log(this.currPlayer);
+    }
+    checkForWin() {
+
+        ///Need to make this function into arrow function to be able to refer to constructor properties of HEIGHT. 
+        // function _win(cells) {
+        //   return cells.every(
+        //     ([y, x]) =>
+        //       y >= 0 &&
+        //       y < this.HEIGHT && 
+        //          here "this" refers to function _win
+        //       //WHY Error: Uncaught TypeError: Cannot read properties of undefined (reading 'HEIGHT')
+        //       x >= 0 &&
+        //       x < this.WIDTH &&
+        //       this.board[y][x] === this.currPlayer
+        //   );
+        // }
+        const _win=(cells) =>           // Check four cells to see if they're all color of current player
           //  - cells: list of four (y, x) cells
           //  - returns true if all are legal coordinates & all match currPlayer
-      
-          return cells.every(
+          
+          cells.every(
             ([y, x]) =>
               y >= 0 &&
               y < this.HEIGHT && 
@@ -112,7 +140,7 @@ class Game{
               x < this.WIDTH &&
               this.board[y][x] === this.currPlayer
           );
-        }
+        
       
         for (let y = 0; y < this.HEIGHT; y++) {
           for (let x = 0; x < this.WIDTH; x++) {
@@ -129,7 +157,20 @@ class Game{
             }
           }
         }
-      }
-}
+    }
+  }
 
-new Game(6, 7);
+  class Player{
+    constructor(color){
+      this.color = color;
+    }
+  }
+
+  const startBtn = document.querySelector('#start-game');
+  startBtn.addEventListener('click', () =>{
+    let p1 = new Player(document.querySelector('#p1-color').value)
+    let p2 = new Player(document.querySelector('#p2-color').value)
+    new Game(p1, p2);
+  });
+
+
